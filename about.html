@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>torokuro's Homepage</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: url('https://www.nightview.info/photo/spot/0499/0499_02_main.jpg') no-repeat center center fixed;
+      background-size: cover;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      color: #fff;
+      backdrop-filter: brightness(0.95);
+    }
+    .container {
+      max-width: 400px;
+      margin: 60px auto 0 auto;
+      padding: 32px 24px 24px 24px;
+      background: rgba(30,30,30,0.75);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    .main-title {
+      text-align: center;
+      font-size: 2.1em;
+      font-weight: bold;
+      margin-bottom: 34px;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 18px #000a;
+      background: linear-gradient(90deg, #1976d2 10%, #00e8ff 90%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      color: transparent;
+    }
+    .dropdown {
+      position: relative;
+      margin-bottom: 18px;
+    }
+    .dropdown-btn {
+      width: 100%;
+      background-color: #5865f2;
+      color: #fff;
+      padding: 14px 18px;
+      font-size: 18px;
+      text-align: left;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      outline: none;
+      transition: background 0.2s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+      background: linear-gradient(90deg, #1976d2 10%, #00e8ff 90%);
+      color: transparent;
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 1px 8px #0008;
+    }
+    .dropdown-btn:hover, .dropdown-btn:focus {
+      background-color: #4752c4;
+      filter: brightness(1.08);
+    }
+    .dropdown-content {
+      display: none;
+      position: relative;
+      background: rgba(40,40,40,0.95);
+      margin-top: 6px;
+      border-radius: 8px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+      padding: 16px 18px;
+      font-size: 16px;
+      animation: fadeIn 0.2s;
+      /* グラデーション文字適用 */
+      background-clip: padding-box;
+    }
+    .dropdown.show .dropdown-content {
+      display: block;
+    }
+    .info-line, .dropdown-content, .social-list, .social-list li {
+      background: linear-gradient(90deg, #1976d2 10%, #00e8ff 90%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      color: transparent;
+      font-family: 'Fira Mono', 'Consolas', monospace;
+      font-size: 15px;
+      margin: 4px 0;
+    }
+    .dropdown-content > div, .dropdown-content > ul, .dropdown-content > ul > li {
+      background: inherit;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      color: transparent;
+    }
+    .social-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      font-size: 16px;
+    }
+    .social-list li {
+      margin: 8px 0;
+      font-size: 16px;
+    }
+    .social-list a {
+      background: linear-gradient(90deg, #1976d2 10%, #00e8ff 90%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      color: transparent;
+      text-decoration: underline;
+      transition: color 0.2s;
+      word-break: break-all;
+    }
+    .social-list a:hover {
+      filter: brightness(1.4);
+    }
+    @media (max-width: 500px) {
+      .container {
+        max-width: 99vw;
+        padding: 8vw 2vw;
+      }
+      .dropdown-btn, .dropdown-content { font-size: 15px; }
+      .main-title { font-size: 1.35em; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0;}
+      to { opacity: 1;}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="main-title">torokuro's Homepage</div>
+    <!-- AboutMe Dropdown -->
+    <div class="dropdown" id="dropdown-about">
+      <button class="dropdown-btn" id="btn-about">AboutMe</button>
+      <div class="dropdown-content" id="content-about">
+        <div class="info-line">name: torokuro</div>
+        <div class="info-line">hobby: road bike</div>
+        <div class="info-line">likes: tetrio</div>
+      </div>
+    </div>
+    <!-- Social Dropdown -->
+    <div class="dropdown" id="dropdown-social">
+      <button class="dropdown-btn" id="btn-social">Social</button>
+      <div class="dropdown-content" id="content-social">
+        <ul class="social-list">
+          <li>
+            <a href="https://twitter.com/scaret_nicolov/" target="_blank">X</a>
+          </li>
+          <li>
+            Instagram
+          </li>
+          <li>
+            <a href="https://ch.tetr.io/u/asb_torokuro" target="_blank">Tetrio</a>
+          </li>
+          <li>
+            <a href="https://discord.gg/evex" target="_blank">Discord</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <!-- Introduction Dropdown -->
+    <div class="dropdown" id="dropdown-intro">
+      <button class="dropdown-btn" id="btn-intro">Introduction</button>
+      <div class="dropdown-content" id="content-intro">
+        <div style="white-space:pre-line">
+こんにちは！とろくろです
+テトリスを遊んでいるゲーム廃人です
+仲良くしていただけたらと思います
+discordのユーザーネームはtorokurodayoなので
+お気軽にフレンド申請してください!
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    // 汎用ドロップダウン開閉
+    document.querySelectorAll('.dropdown-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        // 他のドロップダウンを全部閉じる
+        document.querySelectorAll('.dropdown').forEach(dd => {
+          if(dd !== btn.parentElement) dd.classList.remove('show');
+        });
+        // 自分のをトグル
+        btn.parentElement.classList.toggle('show');
+      });
+    });
+    // どこかクリックで閉じる
+    document.addEventListener('click', function() {
+      document.querySelectorAll('.dropdown').forEach(dd => dd.classList.remove('show'));
+    });
+  </script>
+</body>
+</html>
