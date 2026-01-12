@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地震監視ダッシュボード Pro v4 (Map Edition)</title>
+    <!-- Leaflet.js (地図) の読み込み -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <style>
+        :root {
+            --bg-color: #0d1117; --card-bg: #161b22; --text-main: #c9d1d9; --text-sub: #8b949e; --accent: #58a6ff;
+            --s1: #465b76; --s2: #2e6fa1; --s3: #009688; --s4: #fbc02d; --s5l: #ff9800; --s5h: #f44336; --s6l: #d32f2f; --s6h: #b71c1c; --s7: #6a1b9a;
+        }
+        body { font-family: sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        header { padding: 12px 20px; background: #010409; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        
+        main { flex: 1; display: grid; grid-template-columns: 1fr 380px; gap: 10px; padding: 10px; overflow: hidden; }
+        
+        #detail-view { background: var(--card-bg); border-radius: 8px; border: 1px solid #30363d; overflow-y: auto; display: flex; flex-direction: column; }
+        #history-view { background: var(--card-bg); border-radius: 8px; border: 1px solid #30363d; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* ヒーローエリア */
+        .hero { padding: 20px; text-align: center; background: linear-gradient(to bottom, #1c2128, var(--card-bg)); border-bottom: 1px solid #30363d; }
+        .shindo-badge-huge { font-size: 4rem; font-weight: bold; margin: 10px 0; padding: 5px 30px; border-radius: 12px; display: inline-block; }
+
+        /* 地図エリア */
+        #map { height: 300px; width: 100%; border-bottom: 1px solid #30363d; background: #000; z-index: 1; }
+
+        /* 地域グリッド */
+        .area-section { padding: 20px; }
+        .area-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-top: 15px; }
+        .area-card { background: #21262d; padding: 8px; border-radius: 6px; border-left: 4px solid #8b949e; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; }
+
+        /* 履歴リスト */
+        .history-list { overflow-y: auto; flex: 1; }
+        .history-item { padding: 12px; border-bottom: 1px solid #21262d; display: grid; grid-template-columns: 45px 1fr; gap: 12px; cursor: pointer; }
+        .history-item:hover { background: #1c2128; }
+        .s-badge { width: 40px; height: 40px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; }
+
+        /* 震度色 */
+        .int-1 { background: var(--s1); } .int-2 { background: var(--s2); } .int-3 { background: var(--s3); } .int-4 { background: var(--s4); color: #000; }
+        .int-5- { background: var(--s5l); } .int-5\+ { background: var(--s5h); } .int-6- { background: var(--s6l); } .int-6\+ { background: var(--s6h); } .int-7 { background: var(--s7); }
+
+        #alert-screen { display: none; position: fixed; inset: 0; background: rgba(220, 0, 0, 0.95); z-index: 9999; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .loading { padding: 20px; text-align: center; color: var(--text-sub); }
+    </style>
+</head>
+<body>
+
+<div id="alert-screen">
+    <h1 style="font-size: 3.5rem; color: white; margin-bottom: 0;">【緊急】震度5弱以上の地震</h1>
+    <p id="alert-info" style="font-size: 2rem; color: white;"></p>
+    <button onclick="closeAlert()" style="padding: 15px 40px; font-size: 1.2rem; cursor: pointer; margin-top: 20px;">内容を確認しました</button>
+</div>
+
+<header>
+    <div style="font-weight: bold; color: var(--accent); font-size: 1.2rem;">地震速報モニター Pro <span style="font-weight: normal; font-size: 0.9rem; color: #fff; background: #444; padding: 2px 8px; border-radius: 4px;">v4 Map-Edition</span></div>
+    <div id="status" style="font-size: 0.8rem; color: var(--text-sub);">同期中...</div>
+</header>
+
+<main>
+    <section id="detail-view">
+        <div id="hero-content" class="hero">
+            <div id="h-time" style="color: var(--text-sub);">----/--/-- --:--:--</div>
+            <div id="h-place" style="font-size: 1.8rem; font-weight: bold; margin: 8px 0;">地震情報を取得中</div>
+            <div id="h-shindo" class="shindo-badge-huge int-1">-</div>
+            <div style="font-size: 1rem;">マグニチュード: <span id="h-mag">-</span> / 深さ: <span id="h-dep">-</span></div>
+            <div id="h-tsunami" style="margin-top: 10px; font-weight: bold; font-size: 0.9rem;"></div>
+        </div>
+
+        <!-- 地図表示エリア -->
+        <div id="map"></div>
+
+        <div class="area-section">
+            <h3 style="margin: 0; font-size: 0.9rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px;">各地の震度（都道府県別）</h3>
+            <div id="area-list" class="area-grid"></div>
+        </div>
+    </section>
+
+    <section id="history-view">
+        <div style="padding: 10px; background: #1c2128; font-size: 0.8rem; font-weight: bold; border-bottom: 1px solid #30363d;">地震履歴</div>
+        <div id="history-list" class="history-list"></div>
+    </section>
+</main>
+
+<script>
+    const BASE_URL = "https://www.jma.go.jp/bosai/quake/data/";
+    const LIST_URL = BASE_URL + "list.json";
+    let lastEventId = "";
+    let isInitial = true;
+    let map, marker;
+
+    // 1. 地図の初期化
+    function initMap() {
+        map = L.map('map', { zoomControl: false }).setView([35.6895, 139.6917], 5);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+    }
+
+    // 2. 座標文字列 (+35.1+140.2/) を [lat, lon] に変換
+    function parseCoords(coordStr) {
+        if (!coordStr) return null;
+        const matches = coordStr.match(/[+-]\d+\.\d+/g);
+        if (matches && matches.length >= 2) {
+            return [parseFloat(matches[0]), parseFloat(matches[1])];
+        }
+        return null;
+    }
+
+    function formatShindo(code) {
+        if (!code) return "-";
+        return code.replace('+', '強').replace('-', '弱');
+    }
+
+    async function fetchData() {
+        try {
+            const res = await fetch(LIST_URL + "?_=" + Date.now());
+            const data = await res.json();
+            if (!data || data.length === 0) return;
+
+            renderHistory(data);
+            
+            const latest = data[0];
+            if (latest.json !== lastEventId) {
+                renderDetail(latest);
+                if (!isInitial) checkAlert(latest);
+                lastEventId = latest.json;
+                isInitial = false;
+            }
+            document.getElementById('status').innerText = "最終更新: " + new Date().toLocaleTimeString();
+        } catch (e) {
+            console.error("Fetch Error:", e);
+        }
+    }
+
+    function renderDetail(eq) {
+        document.getElementById('h-time').innerText = new Date(eq.at).toLocaleString('ja-JP');
+        document.getElementById('h-place').innerText = eq.anm || "震源情報なし";
+        
+        const shindoEl = document.getElementById('h-shindo');
+        shindoEl.innerText = formatShindo(eq.maxi);
+        shindoEl.className = `shindo-badge-huge int-${eq.maxi}`;
+        
+        document.getElementById('h-mag').innerText = eq.mag || "-";
+        document.getElementById('h-dep').innerText = eq.pc || "不明";
+        
+        const tsuText = eq.tsunami === "0" ? "津波の心配なし" : (eq.tsunami === "1" ? "津波調査中" : "津波情報に注意");
+        const tsuEl = document.getElementById('h-tsunami');
+        tsuEl.innerText = tsuText;
+        tsuEl.style.color = eq.tsunami === "0" ? "var(--text-sub)" : "#ff7b72";
+
+        // 地図の更新
+        const pos = parseCoords(eq.cod);
+        if (pos) {
+            if (marker) map.removeLayer(marker);
+            marker = L.circleMarker(pos, {
+                radius: 12,
+                fillColor: "#ff4444",
+                color: "#fff",
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(map);
+            marker.bindPopup(`<b>${eq.anm}</b><br>震度: ${formatShindo(eq.maxi)}`).openPopup();
+            map.flyTo(pos, 7, { duration: 1.5 });
+        }
+
+        if (eq.json) fetchAreaDetail(eq.json);
+    }
+
+    async function fetchAreaDetail(fileName) {
+        const areaList = document.getElementById('area-list');
+        areaList.innerHTML = `<div class="loading">取得中...</div>`;
+        try {
+            const res = await fetch(BASE_URL + fileName);
+            const detail = await res.json();
+            const obs = detail?.Body?.Intensity?.Observation?.Pref;
+            if (obs && Array.isArray(obs)) {
+                areaList.innerHTML = "";
+                obs.forEach(p => {
+                    const card = document.createElement('div');
+                    card.className = 'area-card';
+                    card.style.borderLeftColor = `var(--s${p.MaxInt.replace(/[+-]/, '')})`;
+                    card.innerHTML = `
+                        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p.Name}</span>
+                        <span class="s-badge int-${p.MaxInt}" style="width:22px; height:22px; font-size:0.7rem">${formatShindo(p.MaxInt)}</span>
+                    `;
+                    areaList.appendChild(card);
+                });
+            } else {
+                areaList.innerHTML = `<div class="loading">詳細なし</div>`;
+            }
+        } catch (e) {
+            areaList.innerHTML = `<div class="loading">取得失敗</div>`;
+        }
+    }
+
+    function renderHistory(data) {
+        const container = document.getElementById('history-list');
+        container.innerHTML = "";
+        data.slice(0, 20).forEach(eq => {
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            div.onclick = () => renderDetail(eq);
+            div.innerHTML = `
+                <div class="s-badge int-${eq.maxi}">${formatShindo(eq.maxi)}</div>
+                <div>
+                    <div style="font-weight:bold; font-size:0.85rem;">${eq.anm || "震源地不明"}</div>
+                    <div style="font-size:0.7rem; color:var(--text-sub)">
+                        ${new Date(eq.at).toLocaleTimeString('ja-JP')} / M${eq.mag} / ${eq.pc || ""}
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function checkAlert(eq) {
+        if (["5-", "5+", "6-", "6+", "7"].includes(eq.maxi)) {
+            document.getElementById('alert-info').innerText = `${eq.anm}で最大震度${formatShindo(eq.maxi)}を観測`;
+            document.getElementById('alert-screen').style.display = 'flex';
+            const uttr = new SpeechSynthesisUtterance(`${eq.anm}で震度${formatShindo(eq.maxi)}の地震が発生しました。`);
+            uttr.lang = 'ja-JP';
+            window.speechSynthesis.speak(uttr);
+        }
+    }
+
+    function closeAlert() {
+        document.getElementById('alert-screen').style.display = 'none';
+        window.speechSynthesis.cancel();
+    }
+
+    // 起動
+    initMap();
+    fetchData();
+    setInterval(fetchData, 10000);
+</script>
+
+</body>
+</html>
